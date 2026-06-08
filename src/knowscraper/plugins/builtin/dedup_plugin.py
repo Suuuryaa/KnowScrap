@@ -25,6 +25,10 @@ class DedupPlugin(BasePlugin):
         self._seen: set[str] = set()
         self._dropped = 0
 
+    async def before_crawl(self, crawler) -> None:
+        self._seen = set()
+        self._dropped = 0
+
     async def on_data(self, data: dict) -> dict | None:
         if self._key:
             fingerprint = str(data.get(self._key, ""))

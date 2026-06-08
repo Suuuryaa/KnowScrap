@@ -117,6 +117,7 @@ class BaseCrawler(ABC):
         """
         if urls and not resume:
             await self.request_queue.purge()
+            await self.dataset.drop()
 
         if urls:
             await self.add_requests(urls)
