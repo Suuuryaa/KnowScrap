@@ -1,54 +1,67 @@
 # KnowScraper
 
-**Knowledge Scraper Framework** — A production-grade web scraping framework inspired by [Crawlee](https://crawlee.dev).
+<a href="https://pypi.org/project/knowscraper"><img src="https://img.shields.io/pypi/v/knowscraper?color=blue" alt="PyPI"></a>
+<a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python 3.10+"></a>
+<a href="https://github.com/Suuuryaa/KnowScrap/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
+<a href="https://github.com/Suuuryaa/KnowScrap/actions"><img src="https://img.shields.io/github/actions/workflow/status/Suuuryaa/KnowScrap/scraper.yml?label=CI" alt="CI"></a>
+<img src="https://img.shields.io/badge/Node.js-anti--detection-brightgreen" alt="Node.js">
 
-Python core + Node.js anti-detection. Built for reliability, scale, and stealth.
+> A Crawlee-inspired, production-grade web scraping framework for Python.  
+> Python core · Node.js anti-detection · Built for reliability, scale, and stealth.
 
 ---
 
-## What it does
+## Why KnowScraper?
 
-KnowScraper handles everything hard about web scraping so you can focus on your data:
+Most scrapers break on real websites. KnowScraper doesn't — because it handles everything that makes scraping hard:
 
-- **Anti-bot evasion** — real Chrome TLS fingerprints, browser fingerprint injection, stealth JS patches
-- **Smart concurrency** — autoscales based on CPU/memory in real time
+| Problem | KnowScraper solution |
+|---|---|
+| Bot detection (TLS fingerprint) | Chrome TLS via `got-scraping` (Node.js) |
+| Bot detection (browser fingerprint) | `fingerprint-generator` + `fingerprint-injector` |
+| Headless browser detection | Stealth JS patches, human mouse/scroll/type |
+| IP bans | Proxy rotation with per-session identity |
+| Crashes mid-crawl | SQLite queue — resumes exactly where it stopped |
+| Duplicate URLs | SHA-256 deduplication built into the queue |
+| Overloading servers | Per-domain rate limiting + autoscaled concurrency |
+| JS-rendered pages | Playwright with full fingerprint injection |
+| Boilerplate routing | Label-based Router — one handler per page type |
+
+---
+
+## Features
+
+- **6 crawler types** — HTTP, Cheerio, Playwright, Puppeteer, Adaptive, AI-powered
+- **Anti-bot stack** — Chrome TLS fingerprinting, browser fingerprints, stealth JS patches, human-like interactions
+- **CAPTCHA handling** — detects and solves reCAPTCHA v2/v3, hCaptcha, Cloudflare Turnstile
+- **Sitemap support** — discover and parse XML sitemaps, sitemap indexes, gzipped sitemaps
+- **Plugin ecosystem** — `DedupPlugin`, `RetryPlugin`, `StatsPlugin`, `LoggingPlugin` — or write your own
+- **Memory storage** — drop-in in-memory queue/dataset for testing and lightweight runs
+- **AI crawler** — Claude-powered extraction with natural language (`ctx.extract("product name and price")`)
+- **KnowPlatform** — generate Dockerfile, docker-compose, and GitHub Actions workflows
+- **Smart concurrency** — autoscales based on CPU and memory in real time
 - **Session & proxy rotation** — each "user" has its own cookies, headers, and proxy
-- **Persistent queue** — SQLite-backed, survives crashes, resumes where it left off
-- **Deduplication** — never visits the same URL twice
-- **Automatic retries** — configurable retry count with exponential backoff
-- **robots.txt enforcement** — respects crawl rules and Crawl-delay directives
-- **Per-domain rate limiting** — don't hammer servers even with high concurrency
-- **Label-based routing** — different handlers for different page types
+- **robots.txt enforcement** — respects crawl rules and `Crawl-delay` directives
+- **Persistent queue** — SQLite-backed, survives crashes, resumes from where it stopped
+- **Label-based routing** — different handlers for listing pages, product pages, pagination
 - **CSV & JSON export** — clean output, ready to use
 
 ---
 
-## Architecture
+## Installation
 
+```bash
+pip install knowscraper
+
+# Only needed for browser crawlers
+playwright install chromium
 ```
-Python (core brain)              Node.js (anti-detection)
-────────────────────             ────────────────────────
-RequestQueue (SQLite)            got-scraping (TLS fingerprint)
-SessionPool                      header-generator
-ProxyRotator                     fingerprint-generator
-AutoscaledPool (CPU/mem)         fingerprint-injector
-Router (label dispatch)
-Dataset (storage + export)
-CheerioCrawler (HTTP + BS4)
-PlaywrightCrawler (browser)
-AdaptiveCrawler (auto-detect)
-```
+
+**Requirements:** Python 3.10+, Node.js 18+
 
 ---
 
 ## Quick Start
-
-### Install
-
-```bash
-pip install knowscraper
-playwright install chromium   # only if using PlaywrightCrawler
-```
 
 ### Scaffold a new project
 
@@ -63,11 +76,7 @@ cd my-scraper
 python main.py
 ```
 
----
-
-## Examples
-
-### CheerioCrawler — scrape a static site
+### Your first scraper
 
 ```python
 import asyncio
@@ -79,14 +88,13 @@ dataset = Dataset(name="quotes")
 @router.default_handler
 async def handle_page(ctx):
     for quote in ctx.parsed.select(".quote"):
-        text = quote.select_one(".text")
+        text   = quote.select_one(".text")
         author = quote.select_one(".author")
         if text and author:
             await dataset.push_data({
-                "quote": text.get_text(strip=True),
+                "quote":  text.get_text(strip=True),
                 "author": author.get_text(strip=True),
             })
-    # follow "Next" button automatically
     await ctx.enqueue_links(selector="li.next a")
 
 async def main():
@@ -97,7 +105,7 @@ async def main():
         min_delay=0.5,
         max_delay=1.5,
         respect_robots_txt=True,
-        use_anti_detection=True,   # Chrome TLS fingerprinting via Node.js
+        use_anti_detection=True,
     )
     await crawler.run(["https://quotes.toscrape.com"])
     await dataset.export_to_csv()
@@ -105,7 +113,24 @@ async def main():
 asyncio.run(main())
 ```
 
-### PlaywrightCrawler — scrape a JavaScript-heavy site
+---
+
+## Crawler Types
+
+| Crawler | Speed | JS | Anti-bot | Best for |
+|---|---|---|---|---|
+| `HttpCrawler` | ⚡⚡⚡ | ✗ | TLS fingerprint | Raw HTTP, APIs |
+| `CheerioCrawler` | ⚡⚡⚡ | ✗ | TLS fingerprint | Static HTML sites |
+| `PlaywrightCrawler` | ⚡⚡ | ✓ | Full fingerprint + stealth | SPAs, JS-heavy sites |
+| `PuppeteerCrawler` | ⚡⚡ | ✓ | Full fingerprint | Puppeteer-specific workflows |
+| `AdaptiveCrawler` | ⚡⚡⚡→⚡⚡ | Auto | Both | Mixed sites |
+| `AICrawler` | ⚡ | ✓ | Full fingerprint | No-selector AI extraction |
+
+---
+
+## Examples
+
+### PlaywrightCrawler — JavaScript-heavy site
 
 ```python
 import asyncio
@@ -116,8 +141,7 @@ dataset = Dataset(name="spa_data")
 
 @router.default_handler
 async def handle_page(ctx):
-    # Full Playwright page object
-    title = await ctx.page.title()
+    title   = await ctx.page.title()
     content = await ctx.page.inner_text("body")
     await dataset.push_data({"title": title, "url": ctx.request.url})
 
@@ -125,11 +149,9 @@ async def main():
     crawler = PlaywrightCrawler(
         router=router,
         dataset=dataset,
-        browser_type="chromium",
-        headless=True,
-        stealth_mode=True,         # JS patches (removes webdriver flag, etc.)
-        inject_fingerprint=True,   # real browser fingerprints from Node.js
-        random_interactions=True,  # human-like mouse movement + scrolling
+        stealth_mode=True,
+        inject_fingerprint=True,
+        random_interactions=True,   # human-like mouse + scroll
         use_anti_detection=True,
     )
     await crawler.run(["https://example.com"])
@@ -137,41 +159,122 @@ async def main():
 asyncio.run(main())
 ```
 
-### Label-based routing — different handlers per page type
+### AICrawler — no selectors needed
 
 ```python
-from knowscraper import CheerioCrawler, Router, Dataset, Request
+import asyncio
+from knowscraper import AICrawler, Router, Dataset
 
 router = Router()
 dataset = Dataset(name="products")
 
+@router.default_handler
+async def handle_page(ctx):
+    # Describe what you want — Claude extracts it
+    product = await ctx.extract("product name, price, rating, and availability")
+    await dataset.push_data(product)
+
+    # Natural language actions
+    await ctx.act("click the Accept Cookies button if present")
+
+async def main():
+    crawler = AICrawler(
+        router=router,
+        dataset=dataset,
+        # api_key="sk-ant-..."  or set ANTHROPIC_API_KEY env var
+    )
+    await crawler.run(["https://example.com/products"])
+
+asyncio.run(main())
+```
+
+### Label-based routing
+
+```python
+from knowscraper import CheerioCrawler, Router, Dataset, Request
+
+router  = Router()
+dataset = Dataset(name="products")
+
 @router.handler("listing")
 async def handle_listing(ctx):
-    # enqueue product links with "product" label
     await ctx.enqueue_links(selector="a.product-link", label="product")
-    # enqueue next page
-    await ctx.enqueue_links(selector="a.next-page", label="listing")
+    await ctx.enqueue_links(selector="a.next-page",    label="listing")
 
 @router.handler("product")
 async def handle_product(ctx):
     name  = ctx.parsed.select_one("h1.product-name")
     price = ctx.parsed.select_one(".price")
     await dataset.push_data({
-        "name":  name.get_text(strip=True) if name else "",
+        "name":  name.get_text(strip=True)  if name  else "",
         "price": price.get_text(strip=True) if price else "",
         "url":   ctx.request.url,
     })
 
 async def main():
     crawler = CheerioCrawler(router=router, dataset=dataset)
-    start = Request(url="https://example-shop.com/products", label="listing")
-    await crawler.add_requests([start])
-    await crawler.run()
+    await crawler.run([Request(url="https://shop.example.com", label="listing")])
 
 asyncio.run(main())
 ```
 
-### Proxy rotation + session pool
+### Plugin ecosystem
+
+```python
+from knowscraper import CheerioCrawler, Router
+from knowscraper import DedupPlugin, RetryPlugin, StatsPlugin, LoggingPlugin
+
+stats  = StatsPlugin()
+crawler = CheerioCrawler(
+    router=router,
+    plugins=[
+        LoggingPlugin(),               # per-request timing logs
+        DedupPlugin(key="url"),        # drop duplicate records
+        RetryPlugin(base_delay=2.0),   # exponential backoff on retries
+        stats,                         # collect per-domain metrics
+    ],
+)
+
+await crawler.run(["https://example.com"])
+print(stats.report())
+# {
+#   "requests_by_domain": {"example.com": 42},
+#   "avg_response_time": 0.312,
+#   "data_records_saved": 38,
+#   ...
+# }
+```
+
+### CAPTCHA handling
+
+```python
+from knowscraper import PlaywrightCrawler, Router
+from knowscraper import CaptchaHandler
+
+handler = CaptchaHandler(api_key="YOUR_2CAPTCHA_KEY", service="2captcha")
+
+@router.default_handler
+async def handle_page(ctx):
+    solved = await handler.solve_and_inject(ctx.page)
+    if solved:
+        await ctx.page.click("#submit")
+```
+
+### Sitemap discovery
+
+```python
+from knowscraper import fetch_sitemap_urls
+from datetime import datetime
+
+urls = await fetch_sitemap_urls(
+    "https://example.com",
+    modified_after=datetime(2024, 1, 1),
+    max_urls=1000,
+)
+await crawler.run(urls)
+```
+
+### Proxy rotation
 
 ```python
 from knowscraper import CheerioCrawler, ProxyConfiguration
@@ -180,55 +283,136 @@ proxy_config = ProxyConfiguration(
     proxy_urls=[
         "http://user:pass@proxy1.example.com:8080",
         "http://user:pass@proxy2.example.com:8080",
-        "http://user:pass@proxy3.example.com:8080",
     ],
-    rotate="round_robin",  # or "random"
+    rotate="round_robin",
 )
 
-crawler = CheerioCrawler(
-    router=router,
-    proxy_configuration=proxy_config,
-    max_concurrency=10,
-)
+crawler = CheerioCrawler(router=router, proxy_configuration=proxy_config)
 ```
 
 ### Resume a crashed crawl
 
 ```python
-# First run — crawls normally
+# First run
 await crawler.run(["https://example.com"])
 
-# Second run — resumes from where it stopped
+# Resume from where it stopped (queue persists in SQLite)
 await crawler.run(resume=True)
 ```
 
-### robots.txt + rate limiting
+### Memory storage (for testing)
 
 ```python
-crawler = CheerioCrawler(
-    router=router,
-    respect_robots_txt=True,        # skip URLs disallowed by robots.txt
-    user_agent="MyBot/1.0",
-    max_requests_per_minute=30,     # never exceed 30 req/min per domain
-)
+from knowscraper.storage.memory_storage import MemoryRequestQueue, MemoryDataset
+
+crawler = CheerioCrawler(router=router, dataset=MemoryDataset())
+crawler.request_queue = MemoryRequestQueue()   # no disk, no SQLite
+```
+
+### Deploy with KnowPlatform
+
+```python
+from knowscraper import KnowPlatform, RunConfig
+
+platform = KnowPlatform(project_dir=".")
+platform.generate_dockerfile()        # production Dockerfile
+platform.generate_docker_compose()    # local multi-container run
+platform.generate_github_action()     # CI/CD workflow (daily cron + manual trigger)
+platform.generate_input_schema()      # JSON schema for input validation
+
+# In your scraper — works identically local and in Docker/CI
+config = KnowPlatform.get_input()     # reads KNOWSCRAPER_INPUT env var
+await crawler.run(config.start_urls)
 ```
 
 ---
 
-## Crawler types
+## Architecture
 
-| Crawler | Speed | Handles JS | Best for |
-|---|---|---|---|
-| `CheerioCrawler` | Very fast | No | Static HTML sites |
-| `HttpCrawler` | Very fast | No | Raw HTTP, APIs |
-| `PlaywrightCrawler` | Slower | Yes | SPAs, JS-heavy sites |
-| `AdaptiveCrawler` | Smart | Auto | Mixed sites |
+```
+Python (core)                        Node.js (anti-detection microservice)
+─────────────────────────────        ──────────────────────────────────────
+RequestQueue  (SQLite)               got-scraping      (Chrome TLS fingerprint)
+SessionPool                          header-generator  (realistic HTTP headers)
+ProxyConfiguration                   fingerprint-generator
+AutoscaledPool (CPU/mem)             fingerprint-injector
+Router (label dispatch)              Puppeteer         (headless Chrome via CDP)
+Dataset (storage + export)
+CheerioCrawler   (HTTP + BS4)
+PlaywrightCrawler (browser)
+PuppeteerCrawler  (Node.js browser)
+AdaptiveCrawler  (auto HTTP→browser)
+AICrawler        (Claude-powered)
+```
+
+The Node.js microservice starts automatically on `localhost:9119` when `use_anti_detection=True`.
+
+---
+
+## Project Structure
+
+```
+knowscraper/
+├── src/knowscraper/
+│   ├── core/
+│   │   ├── request.py              # Request + state machine
+│   │   ├── request_queue.py        # SQLite queue + deduplication
+│   │   ├── router.py               # Label routing + CrawlingContext
+│   │   ├── dataset.py              # Output storage, CSV/JSON export
+│   │   ├── configuration.py        # Config + env var overrides
+│   │   ├── session_pool.py         # Session lifecycle
+│   │   ├── proxy_configuration.py  # Proxy rotation
+│   │   └── autoscaled_pool.py      # Dynamic concurrency
+│   │
+│   ├── crawlers/
+│   │   ├── base_crawler.py         # Run loop, retries, robots, rate limit
+│   │   ├── http_crawler.py         # HTTP via got-scraping
+│   │   ├── cheerio_crawler.py      # HTTP + BeautifulSoup
+│   │   ├── playwright_crawler.py   # Real browser + stealth + fingerprints
+│   │   ├── puppeteer_crawler.py    # Node.js Puppeteer via bridge
+│   │   ├── adaptive_crawler.py     # Auto HTTP → browser upgrade
+│   │   └── ai_crawler.py           # Claude-powered extraction + actions
+│   │
+│   ├── anti_detection/
+│   │   ├── stealth.py              # JS patches + human mouse/scroll/type
+│   │   ├── captcha.py              # CAPTCHA detection + solving
+│   │   ├── bridge.py               # Python ↔ Node.js bridge
+│   │   └── node_service/
+│   │       ├── server.js           # Express microservice (TLS, fingerprint, Puppeteer)
+│   │       └── package.json
+│   │
+│   ├── plugins/
+│   │   ├── base_plugin.py          # Plugin base class (8 lifecycle hooks)
+│   │   ├── plugin_manager.py       # Hook runner
+│   │   └── builtin/
+│   │       ├── logging_plugin.py
+│   │       ├── dedup_plugin.py
+│   │       ├── retry_plugin.py
+│   │       └── stats_plugin.py
+│   │
+│   ├── storage/
+│   │   ├── local_storage.py        # Filesystem backend
+│   │   └── memory_storage.py       # In-memory backend (testing)
+│   │
+│   ├── utils/
+│   │   ├── sitemap.py              # Sitemap discovery + parsing
+│   │   ├── robots.py               # robots.txt enforcement
+│   │   ├── url_utils.py            # URL normalization
+│   │   └── log.py                  # Loguru logger
+│   │
+│   └── platform/
+│       └── platform.py             # Dockerfile, CI, RunConfig
+│
+├── tests/                          # 211 tests
+├── examples/
+└── pyproject.toml
+```
 
 ---
 
 ## Configuration
 
-All settings configurable via constructor args or environment variables:
+All settings can be passed as constructor arguments or set via environment variables:
 
 ```bash
 KNOWSCRAPER_MAX_CONCURRENCY=10
@@ -242,96 +426,51 @@ KNOWSCRAPER_BROWSER=chromium
 KNOWSCRAPER_LOG_LEVEL=INFO
 KNOWSCRAPER_STORAGE_DIR=.knowscraper
 KNOWSCRAPER_NODE_SERVICE=http://127.0.0.1:9119
+
+# For Docker / CI runs
+KNOWSCRAPER_INPUT='{"startUrls": ["https://example.com"], "maxPages": 100}'
+ANTHROPIC_API_KEY=sk-ant-...   # for AICrawler
 ```
 
 ---
 
 ## Output
 
-All data saved to `.knowscraper/datasets/<name>/`:
+Data is saved to `.knowscraper/datasets/<name>/`:
 
 ```python
-# Export after crawl
-await dataset.export_to_csv()    # → .knowscraper/datasets/results/data.csv
-await dataset.export_to_json()   # → .knowscraper/datasets/results/data.json
+await dataset.export_to_csv()     # → .knowscraper/datasets/results/data.csv
+await dataset.export_to_json()    # → .knowscraper/datasets/results/data.json
 
 # Read programmatically
-records = await dataset.get_data(offset=0, limit=100)
+page   = await dataset.get_data(offset=0, limit=100)
 async for record in dataset.iterate():
     print(record)
 ```
 
 ---
 
-## Anti-Detection Stack
-
-KnowScraper uses a Python + Node.js hybrid for maximum anti-detection:
-
-```
-Request
-  → Session (cookies + identity)
-  → Proxy (IP rotation)
-  → got-scraping (Chrome TLS fingerprint)     ← Node.js
-  → header-generator (realistic headers)      ← Node.js
-  → fingerprint-injector (browser props)      ← Node.js
-  → Playwright stealth patches                ← Python
-  → Human-like interactions (optional)        ← Python
-```
-
-The Node.js anti-detection service starts automatically when `use_anti_detection=True`.
-
----
-
-## Project Structure
-
-```
-src/knowscraper/
-├── core/
-│   ├── request.py             # Request object + state machine
-│   ├── request_queue.py       # SQLite-backed queue + deduplication
-│   ├── router.py              # Label routing + CrawlingContext
-│   ├── dataset.py             # Output storage + CSV/JSON export
-│   ├── configuration.py       # Global config (env var overrides)
-│   ├── session_pool.py        # Session lifecycle management
-│   ├── proxy_configuration.py # Proxy rotation
-│   └── autoscaled_pool.py     # Dynamic concurrency (CPU/memory)
-│
-├── crawlers/
-│   ├── base_crawler.py        # Abstract base (run loop, retries, robots, rate limit)
-│   ├── http_crawler.py        # Plain HTTP via got-scraping
-│   ├── cheerio_crawler.py     # HTTP + BeautifulSoup
-│   ├── playwright_crawler.py  # Real browser + fingerprints + stealth
-│   └── adaptive_crawler.py   # Auto HTTP→browser upgrade
-│
-├── anti_detection/
-│   ├── stealth.py             # JS patches + human mouse/scroll/type
-│   ├── bridge.py              # Python ↔ Node.js communication
-│   └── node_service/
-│       ├── server.js          # Express microservice
-│       └── package.json
-│
-├── storage/
-│   └── local_storage.py       # Filesystem storage backend
-│
-└── utils/
-    ├── url_utils.py           # URL normalization + extraction
-    ├── robots.py              # robots.txt fetching + enforcement
-    └── log.py                 # Loguru logger
-```
-
----
-
-## CLI Reference
+## CLI
 
 ```bash
-knowscraper create <name>                  # scaffold HTTP scraper project
-knowscraper create <name> --type playwright  # scaffold browser scraper project
-knowscraper run <file.py>                  # run a scraper file
-knowscraper info                           # show version + environment
+knowscraper create <name>                    # scaffold HTTP scraper
+knowscraper create <name> --type playwright  # scaffold browser scraper
+knowscraper run <file.py>                    # run a scraper
+knowscraper info                             # show version + environment
+```
+
+---
+
+## Running Tests
+
+```bash
+pip install -e ".[dev]"
+pytest tests/                           # all 211 tests
+pytest tests/ -m "not integration"      # skip live network tests
 ```
 
 ---
 
 ## License
 
-MIT
+MIT © [Suuuryaa](https://github.com/Suuuryaa)
