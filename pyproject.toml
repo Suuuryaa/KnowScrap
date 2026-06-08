@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "knowscraper"
+version = "0.1.0"
+description = "Knowledge Scraper — A Crawlee-inspired web scraping framework. Python core + Node.js anti-detection."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+
+dependencies = [
+    "httpx>=0.27.0",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=5.0.0",
+    "playwright>=1.44.0",
+    "psutil>=5.9.0",
+    "loguru>=0.7.0",
+    "tenacity>=8.3.0",
+    "anthropic>=0.30.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-mock>=3.14.0",
+]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[project.scripts]
+knowscraper = "knowscraper.cli.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = [
+    "integration: marks tests that make real HTTP requests (deselect with '-m not integration')",
+]
