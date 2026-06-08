@@ -17,7 +17,7 @@
 
 ---
 
-KnowScraper handles the hard parts of web scraping — bot detection, retries, concurrency, deduplication, storage — so you write handlers, not infrastructure.
+KnowScraper handles the hard parts of web scraping :  bot detection, retries, concurrency, deduplication, storage — so you write handlers, not infrastructure.
 
 ```python
 import asyncio
@@ -64,16 +64,16 @@ playwright install chromium   # only needed for browser crawlers
 
 | | Feature |
 |---|---|
-| 🛡️ | **Anti-bot** — Chrome TLS fingerprints, browser fingerprint injection, stealth JS patches, human-like mouse/scroll/type |
-| 🌐 | **6 crawlers** — HTTP, Cheerio, Playwright, Puppeteer, Adaptive (auto-detects JS), AI-powered |
-| 🔄 | **Persistent queue** — SQLite-backed, survives crashes, resumes where it stopped |
-| ⚡ | **Smart concurrency** — autoscales based on CPU + memory |
-| 🔀 | **Session & proxy rotation** — each request gets its own identity and IP |
-| 🤖 | **AI extraction** — describe what you want, Claude extracts it (no selectors) |
-| 🧩 | **Plugins** — `DedupPlugin`, `RetryPlugin`, `StatsPlugin`, `LoggingPlugin` |
-| 🔒 | **CAPTCHA solving** — reCAPTCHA v2/v3, hCaptcha, Cloudflare Turnstile |
-| 🗺️ | **Sitemaps** — discover and crawl XML sitemaps with lastmod filtering |
-| 📦 | **Export** — CSV and JSON out of the box |
+| 🛡️ | **Anti-bot** :  Chrome TLS fingerprints, browser fingerprint injection, stealth JS patches, human-like mouse/scroll/type |
+| 🌐 | **6 crawlers** :  HTTP, Cheerio, Playwright, Puppeteer, Adaptive (auto-detects JS), AI-powered |
+| 🔄 | **Persistent queue** :  SQLite-backed, survives crashes, resumes where it stopped |
+| ⚡ | **Smart concurrency** :  autoscales based on CPU + memory |
+| 🔀 | **Session & proxy rotation** :  each request gets its own identity and IP |
+| 🤖 | **AI extraction** :  describe what you want, Claude extracts it (no selectors) |
+| 🧩 | **Plugins** : `DedupPlugin`, `RetryPlugin`, `StatsPlugin`, `LoggingPlugin` |
+| 🔒 | **CAPTCHA solving** :  reCAPTCHA v2/v3, hCaptcha, Cloudflare Turnstile |
+| 🗺️ | **Sitemaps** :  discover and crawl XML sitemaps with lastmod filtering |
+| 📦 | **Export** :  CSV and JSON out of the box |
 
 ---
 
@@ -85,7 +85,7 @@ playwright install chromium   # only needed for browser crawlers
 | `HttpCrawler` | ✗ | TLS fingerprint | APIs, raw HTTP |
 | `PlaywrightCrawler` | ✓ | Full fingerprint + stealth | SPAs, React/Vue/Angular apps |
 | `PuppeteerCrawler` | ✓ | Full fingerprint | Puppeteer-specific workflows |
-| `AdaptiveCrawler` | Auto | Both | Mixed sites — upgrades automatically |
+| `AdaptiveCrawler` | Auto | Both | Mixed sites , upgrades automatically |
 | `AICrawler` | ✓ | Full fingerprint | Extract data without writing selectors |
 
 ---
@@ -93,7 +93,7 @@ playwright install chromium   # only needed for browser crawlers
 ## Examples
 
 <details>
-<summary><b>PlaywrightCrawler — JavaScript-heavy site</b></summary>
+<summary><b>PlaywrightCrawler : JavaScript-heavy site</b></summary>
 
 ```python
 from knowscraper import PlaywrightCrawler, Router, Dataset
@@ -118,7 +118,7 @@ await crawler.run(["https://example.com"])
 </details>
 
 <details>
-<summary><b>AICrawler — no selectors needed</b></summary>
+<summary><b>AICrawler : no selectors needed</b></summary>
 
 ```python
 from knowscraper import AICrawler, Router, Dataset
@@ -128,7 +128,7 @@ dataset = Dataset(name="products")
 
 @router.default_handler
 async def handler(ctx):
-    # plain English — Claude reads the page and extracts the data
+    # plain English : Claude reads the page and extracts the data
     data = await ctx.extract("product name, price, rating, and availability")
     await dataset.push_data(data)
 
@@ -142,7 +142,7 @@ await crawler.run(["https://example.com/products"])
 </details>
 
 <details>
-<summary><b>Label-based routing — listings + product pages</b></summary>
+<summary><b>Label-based routing : listings + product pages</b></summary>
 
 ```python
 from knowscraper import CheerioCrawler, Router, Dataset, Request
@@ -169,7 +169,7 @@ await crawler.run([Request(url="https://shop.example.com", label="listing")])
 </details>
 
 <details>
-<summary><b>Plugins — dedup, retry, stats</b></summary>
+<summary><b>Plugins : dedup, retry, stats</b></summary>
 
 ```python
 from knowscraper import CheerioCrawler, DedupPlugin, RetryPlugin, StatsPlugin
@@ -210,10 +210,10 @@ crawler = CheerioCrawler(router=router, proxy_configuration=proxy_config)
 <summary><b>Resume a crashed crawl</b></summary>
 
 ```python
-# First run — crawls normally
+# First run : crawls normally
 await crawler.run(["https://example.com"])
 
-# Restart — picks up exactly where it stopped (SQLite queue persists)
+# Restart : picks up exactly where it stopped (SQLite queue persists)
 await crawler.run(resume=True)
 ```
 </details>
