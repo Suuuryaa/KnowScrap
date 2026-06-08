@@ -4,7 +4,7 @@
 
 <p align="center">
   <b>Reliable web scraping for Python :  with real anti-bot evasion built in.</b><br>
-  Python core · Node.js anti-detection · Crawlee-inspired
+  Python core · Node.js anti-detection 
 </p>
 
 <p align="center">
