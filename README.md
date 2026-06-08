@@ -1,6 +1,6 @@
-<h1 align="center">
-  KnowScraper
-</h1>
+<p align="center">
+  <img src="assets/banner.svg" alt="KnowScraper" width="900"/>
+</p>
 
 <p align="center">
   <b>Reliable web scraping for Python :  with real anti-bot evasion built in.</b><br>
